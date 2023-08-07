@@ -34,5 +34,36 @@ allprojects {
         mavenCentral()
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     }
+}
 
+    
+task writeProperties {
+    doLast {
+        def launchConfig = [
+            "version": "0.2.0",
+            "configurations": [
+                [
+                    "name": "Java Debug with Properties",
+                    "type": "java",
+                    "request": "launch",
+                    "mainClass": "com.shatteredpixel.shatteredpixeldungeon.desktop.DesktopLauncher",
+                    "preLaunchTask": "gradlew writeProperties",
+                    "cwd": "\${workspaceFolder}",
+                    "vmArgs": [
+                        "-DSpecification-Title=$appName",
+                        "-DImplementation-Title=$appPackageName",
+                        "-DSpecification-Version=$appVersionName",
+                        "-DImplementation-Version=$appVersionCode"
+                    ],
+                    "sourcePaths": [
+                        "\${workspaceFolder}/core/src/main/assets",
+                        "\${workspaceFolder}/desktop/src/main/assets"
+                    ]
+                ]
+            ]
+        ]
+        new File("$projectDir/.vscode/launch.json").withWriter { writer ->
+            writer.write(new groovy.json.JsonBuilder(launchConfig).toPrettyString())
+        }
+    }
 }
