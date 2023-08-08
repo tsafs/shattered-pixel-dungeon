@@ -1915,176 +1915,25 @@ public class Hero extends Char {
 
     @Override
     public void die(Object cause) {
-
         curAction = null;
 
-        // // A hack that disables the ankh and permadeath
-        // interrupt();
-        // resting = false;
-        // PotionOfHealing.cure(this);
-        // Buff.prolong(this, AnkhInvulnerability.class, AnkhInvulnerability.DURATION);
-        // GameScene.flash(0x80FFFF40);
-        // Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
-        // GLog.w(Messages.get(this, "tryagain"));
-
-        // // I dont know what this does ... but it seems to be important
-        // for (Char ch : Actor.chars()) {
-        // if (ch instanceof DriedRose.GhostHero) {
-        // return;
-        // }
-        // }
-
-        // return;
-
-        Ankh ankh = null;
-
-        // look for ankhs in player inventory, prioritize ones which are blessed.
-        for (Ankh i : belongings.getAllItems(Ankh.class)) {
-            if (ankh == null || i.isBlessed()) {
-                ankh = i;
-            }
-        }
-
-        if (ankh != null) {
-            interrupt();
-            resting = false;
-
-            if (ankh.isBlessed()) {
-                this.HP = HT / 4;
-
-                PotionOfHealing.cure(this);
-                Buff.prolong(this, AnkhInvulnerability.class, AnkhInvulnerability.DURATION);
-
-                SpellSprite.show(this, SpellSprite.ANKH);
-                GameScene.flash(0x80FFFF40);
-                Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
-                GLog.w(Messages.get(this, "revive"));
-                Statistics.ankhsUsed++;
-
-                ankh.detach(belongings.backpack);
-
-                for (Char ch : Actor.chars()) {
-                    if (ch instanceof DriedRose.GhostHero) {
-                        ((DriedRose.GhostHero) ch).sayAnhk();
-                        return;
-                    }
-                }
-            } else {
-
-                // this is hacky, basically we want to declare that a wndResurrect exists before
-                // it actually gets created. This is important so that the game knows to not
-                // delete the run or submit it to rankings, because a WndResurrect is about to
-                // exist
-                // this is needed because the actual creation of the window is delayed here
-                WndResurrect.instance = new Object();
-                Ankh finalAnkh = ankh;
-                Game.runOnRenderThread(new Callback() {
-                    @Override
-                    public void call() {
-                        GameScene.show(new WndResurrect(finalAnkh));
-                    }
-                });
-
-                if (cause instanceof Hero.Doom) {
-                    ((Hero.Doom) cause).onDeath();
-                }
-
-                SacrificialFire.Marked sacMark = buff(SacrificialFire.Marked.class);
-                if (sacMark != null) {
-                    sacMark.detach();
-                }
-
-            }
-            return;
-        }
+        GameScene.flash(0x80FFFF40);
+        Sample.INSTANCE.play(Assets.Sounds.DEATH);
+        GLog.w(Messages.get(this, "try_again"));
 
         Actor.fixTime();
         super.die(cause);
-        notReallyDie(cause);
-        // reallyDie(cause);
+        showGameOverWnd();
     }
 
-    public static void notReallyDie(Object cause) {
-
+    public static void showGameOverWnd() {
         GameScene.updateFog();
-
         Game.runOnRenderThread(new Callback() {
             @Override
             public void call() {
                 GameScene.gameOver();
-                Sample.INSTANCE.play(Assets.Sounds.DEATH);
             }
         });
-    }
-
-    public static void reallyDie(Object cause) {
-
-        int length = Dungeon.level.length();
-        int[] map = Dungeon.level.map;
-        boolean[] visited = Dungeon.level.visited;
-        boolean[] discoverable = Dungeon.level.discoverable;
-
-        for (int i = 0; i < length; i++) {
-
-            int terr = map[i];
-
-            if (discoverable[i]) {
-
-                visited[i] = true;
-                if ((Terrain.flags[terr] & Terrain.SECRET) != 0) {
-                    Dungeon.level.discover(i);
-                }
-            }
-        }
-
-        Bones.leave();
-
-        Dungeon.observe();
-        GameScene.updateFog();
-
-        Dungeon.hero.belongings.identify();
-
-        int pos = Dungeon.hero.pos;
-
-        ArrayList<Integer> passable = new ArrayList<>();
-        for (Integer ofs : PathFinder.NEIGHBOURS8) {
-            int cell = pos + ofs;
-            if ((Dungeon.level.passable[cell] || Dungeon.level.avoid[cell]) && Dungeon.level.heaps.get(cell) == null) {
-                passable.add(cell);
-            }
-        }
-        Collections.shuffle(passable);
-
-        ArrayList<Item> items = new ArrayList<>(Dungeon.hero.belongings.backpack.items);
-        for (Integer cell : passable) {
-            if (items.isEmpty()) {
-                break;
-            }
-
-            Item item = Random.element(items);
-            Dungeon.level.drop(item, cell).sprite.drop(pos);
-            items.remove(item);
-        }
-
-        for (Char c : Actor.chars()) {
-            if (c instanceof DriedRose.GhostHero) {
-                ((DriedRose.GhostHero) c).sayHeroKilled();
-            }
-        }
-
-        Game.runOnRenderThread(new Callback() {
-            @Override
-            public void call() {
-                GameScene.gameOver();
-                Sample.INSTANCE.play(Assets.Sounds.DEATH);
-            }
-        });
-
-        if (cause instanceof Hero.Doom) {
-            ((Hero.Doom) cause).onDeath();
-        }
-
-        Dungeon.deleteGame(GamesInProgress.curSlot, true);
     }
 
     // effectively cache this buff to prevent having to call buff(...) a bunch.
