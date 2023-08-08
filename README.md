@@ -1,8 +1,17 @@
 # Shattered Pixel Dungeon
 
+This is a fork and contributions are welcome :) I'd like to add quality of life improvements to the game and perhaps extend it a little bit
+
 ## Modifications in this fork
 
 - Still a draft PR: Add softcore game mode
+
+### TODO
+
+- Redo translations. After a quick check in the German translations, some of them seem off. Perhaps context based translations with the aid of LLMs can do a better job.
+- Refine controller support. I'd like to auto target enemies and switch between them more easily.
+- Autolooting. Currently, loot is sometimes not automatically picked up. For example, this happens when a dewdrop drops upon walking on a grass field and also when the hero walks too fast.
+- 
 
 ## Original README
 
