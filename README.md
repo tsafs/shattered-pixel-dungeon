@@ -4,7 +4,7 @@ This is a fork and contributions are welcome :) I'd like to add quality of life 
 
 ## Modifications in this fork
 
-- Adds a new game mode "Softcore". This is the new default. The "Softcore" game mode allows to restart at the last save point upon death. `Ankh` can still be found and used, but has no effect in this game mode.
+- Adds a new game mode `Softcore`. This is the new default. The softcore game mode allows to restart at the last save point upon death. `Ankh` can still be found and used, but has no effect in this game mode.
 
 ### TODO
 
