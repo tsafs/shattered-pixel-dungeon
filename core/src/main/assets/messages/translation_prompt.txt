@@ -1,7 +1,8 @@
+I'm developing an RPG game where the game mode can either be softcore or hardcore.
 Translate this sentence and keep the variable in English:
-actors.hero.hero.try_again=Heute ist ein guter Tag.
+scenes.heroselectscene.is_hardcore_mode=Hardcore
 into these languages:
 chinese, vietnamese, ukrainean, turkish, russian, portoguese, polish, dutch, korean, japanese, italian, indonesian, hungarian, french, spanish, greek, german, czech
-Return only a list with the language followed by the variable and the translation, like this:
+Return only a list with the language followed by the actual variable name and the translation, like this:
 1. <language>: actors.hero.hero.try_again=<translation>
 Replace <language> with the actual language and <translation> with the corresponding translation. Work step by step.

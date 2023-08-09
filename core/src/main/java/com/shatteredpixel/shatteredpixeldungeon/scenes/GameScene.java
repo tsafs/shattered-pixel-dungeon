@@ -1353,8 +1353,12 @@ public class GameScene extends PixelScene {
         restart.setSize(Math.max(80, restart.reqWidth()), 20);
         restart.setPos(
                 align(uiCamera, (restart.camera.width - restart.width()) / 2),
-                align(uiCamera, (restart.camera.height - restart.height()) / 2 + restart.height() / 2 + 16 - offset));
-        scene.add(restart);
+                align(uiCamera,
+                        (restart.camera.height - restart.height()) / 2 + restart.height() / 2 + 16 - offset));
+
+        if (!Dungeon.isHardcoreMode) {
+            scene.add(restart);
+        }
 
         StyledButton newGame = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(StartScene.class, "new"), 9) {
             @Override
@@ -1374,9 +1378,16 @@ public class GameScene extends PixelScene {
         newGame.alpha(0);
         newGame.camera = uiCamera;
         newGame.setSize(Math.max(80, newGame.reqWidth()), 20);
-        newGame.setPos(
-                align(uiCamera, (newGame.camera.width - newGame.width()) / 2),
-                restart.bottom() + 2);
+
+        float newGame_y;
+        if (!Dungeon.isHardcoreMode) {
+            newGame_y = restart.bottom() + 2;
+        } else {
+            newGame_y = align(uiCamera,
+                    (newGame.camera.height - newGame.height()) / 2 + newGame.height() / 2 + 16 - offset);
+        }
+
+        newGame.setPos(align(uiCamera, (newGame.camera.width - newGame.width()) / 2), newGame_y);
         scene.add(newGame);
 
         StyledButton menu = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(WndKeyBindings.class, "menu"),
@@ -1591,9 +1602,7 @@ public class GameScene extends PixelScene {
 
         @Override
         public void onRightClick(Integer cell) {
-            if (cell == null
-                    || cell < 0
-                    || cell > Dungeon.level.length()
+            if (cell == null || cell < 0 || cell > Dungeon.level.length()
                     || (!Dungeon.level.visited[cell] && !Dungeon.level.mapped[cell])) {
                 return;
             }
@@ -1667,9 +1676,7 @@ public class GameScene extends PixelScene {
                 textLines.add(1, "_" + Messages.get(GameScene.class, "examine") + "_");
             }
 
-            RightClickMenu menu = new RightClickMenu(image,
-                    title,
-                    textLines.toArray(new String[0])) {
+            RightClickMenu menu = new RightClickMenu(image, title, textLines.toArray(new String[0])) {
                 @Override
                 public void onSelect(int index) {
                     if (index == 0) {

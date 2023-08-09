@@ -1917,16 +1917,13 @@ public class Hero extends Char {
     public void die(Object cause) {
         curAction = null;
 
-        // TODO: Load this from some configuration
-        boolean isHardcoreMode = false;
-
-        if (isHardcoreMode && applyAnkh(cause)) {
+        if (Dungeon.isHardcoreMode && applyAnkh(cause)) {
             return;
         }
 
         Actor.fixTime();
         super.die(cause);
-        if (isHardcoreMode) {
+        if (Dungeon.isHardcoreMode) {
             dieInHardcoreMode(cause);
         } else {
             GameScene.flash(0x80FFFF40);

@@ -208,8 +208,11 @@ public class Dungeon {
     public static String customSeedText = "";
     public static long seed;
 
-    public static void init() {
+    // Whether this game is softcore or hardcore, i.e. the hero can only die once or
+    // many times.
+    public static boolean isHardcoreMode;
 
+    public static void init() {
         initialVersion = version = Game.versionCode;
         challenges = SPDSettings.challenges();
         mobsToChampion = -1;
@@ -227,6 +230,8 @@ public class Dungeon {
             customSeedText = "";
             seed = DungeonSeed.randomSeed();
         }
+
+        isHardcoreMode = SPDSettings.isHardcoreMode();
 
         Actor.clear();
         Actor.resetNextID();
