@@ -40,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.StyledButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndChallenges;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndGameInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHeroInfo;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndKeyBindings;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndMessage;
@@ -741,7 +742,7 @@ public class HeroSelectScene extends PixelScene {
             add(challengeButton);
             buttons.add(challengeButton);
 
-            CheckBox chkIsHardcoreMode = new CheckBox(Messages.get(HeroSelectScene.class, "is_hardcore_mode")) {
+            CheckBox chkIsHardcoreMode = new CheckBox(Messages.get(WndGameInProgress.class, "hardcore")) {
                 @Override
                 protected void onClick() {
                     super.onClick();

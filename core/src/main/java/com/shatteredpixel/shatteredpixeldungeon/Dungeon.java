@@ -571,6 +571,7 @@ public class Dungeon {
     private static final String DAILY = "daily";
     private static final String DAILY_REPLAY = "daily_replay";
     private static final String CHALLENGES = "challenges";
+    private static final String IS_HARDCORE_MODE = "is_hardcore_mode";
     private static final String MOBS_TO_CHAMPION = "mobs_to_champion";
     private static final String HERO = "hero";
     private static final String DEPTH = "depth";
@@ -601,6 +602,7 @@ public class Dungeon {
             bundle.put(HERO, hero);
             bundle.put(DEPTH, depth);
             bundle.put(BRANCH, branch);
+            bundle.put(IS_HARDCORE_MODE, isHardcoreMode);
 
             bundle.put(GOLD, gold);
             bundle.put(ENERGY, energy);
@@ -668,9 +670,8 @@ public class Dungeon {
     }
 
     public static void saveAll() throws IOException {
-        System.out.println("Saving game...");
         if (hero != null && (hero.isAlive() || WndResurrect.instance != null)) {
-
+            System.out.println("Saving all...");
             Actor.fixTime();
             updateLevelExplored();
             saveGame(GamesInProgress.curSlot);
@@ -702,6 +703,7 @@ public class Dungeon {
         customSeedText = bundle.getString(CUSTOM_SEED);
         daily = bundle.getBoolean(DAILY);
         dailyReplay = bundle.getBoolean(DAILY_REPLAY);
+        isHardcoreMode = bundle.getBoolean(IS_HARDCORE_MODE);
 
         Actor.clear();
         Actor.restoreNextID(bundle);
@@ -832,6 +834,14 @@ public class Dungeon {
         GamesInProgress.delete(save);
     }
 
+    /**
+     * Used for previewing a game in the main menu.
+     * Populates the given info object with the data from the given bundle.
+     * The bundle is usually loaded from some savefile.
+     * 
+     * @param info
+     * @param bundle
+     */
     public static void preview(GamesInProgress.Info info, Bundle bundle) {
         info.depth = bundle.getInt(DEPTH);
         info.version = bundle.getInt(VERSION);
@@ -840,6 +850,7 @@ public class Dungeon {
         info.customSeed = bundle.getString(CUSTOM_SEED);
         info.daily = bundle.getBoolean(DAILY);
         info.dailyReplay = bundle.getBoolean(DAILY_REPLAY);
+        info.isHardcoreMode = bundle.getBoolean(IS_HARDCORE_MODE);
 
         Hero.preview(info, bundle.getBundle(HERO));
         Statistics.preview(info, bundle);
