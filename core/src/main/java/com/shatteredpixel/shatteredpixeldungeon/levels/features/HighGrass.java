@@ -116,7 +116,7 @@ public class HighGrass {
 
                         if (droppingBerry) {
                             dropped.countUp(1);
-                            level.drop(new Berry(), pos).sprite.drop();
+                            level.drop(new Berry(), pos, true).sprite.drop();
                         }
                     }
 
