@@ -37,134 +37,135 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 
 public class Noisemaker extends Bomb {
-	
-	{
-		image = ItemSpriteSheet.NOISEMAKER;
-	}
 
-	public void setTrigger(int cell){
+    {
+        image = ItemSpriteSheet.NOISEMAKER;
+    }
 
-		Buff.affect(Dungeon.hero, Trigger.class).set(cell);
-		fuse = null;
+    public void setTrigger(int cell) {
 
-	}
+        Buff.affect(Dungeon.hero, Trigger.class).set(cell);
+        fuse = null;
 
-	@Override
-	public ItemSprite.Glowing glowing() {
-		if (fuse == null){
-			for (Trigger trigger : Dungeon.hero.buffs(Trigger.class)){
-				Heap heap = Dungeon.level.heaps.get(trigger.cell);
-				if (heap != null && heap.items.contains(this)) {
-					return new ItemSprite.Glowing( 0xFF0000, 0.6f);
-				}
-			}
-		}
-		return super.glowing();
-	}
+    }
 
-	@Override
-	public boolean doPickUp(Hero hero, int pos) {
-		if (fuse == null){
-			for (Trigger trigger : hero.buffs(Trigger.class)){
-				if (trigger.cell == pos) return false;
-			}
-		}
-		return super.doPickUp(hero, pos);
-	}
+    @Override
+    public ItemSprite.Glowing glowing() {
+        if (fuse == null) {
+            for (Trigger trigger : Dungeon.hero.buffs(Trigger.class)) {
+                Heap heap = Dungeon.level.heaps.get(trigger.cell);
+                if (heap != null && heap.items.contains(this)) {
+                    return new ItemSprite.Glowing(0xFF0000, 0.6f);
+                }
+            }
+        }
+        return super.glowing();
+    }
 
-	public static class Trigger extends Buff {
+    @Override
+    public boolean doPickUp(Hero hero, int pos, boolean isAutoLoot) {
+        if (fuse == null) {
+            for (Trigger trigger : hero.buffs(Trigger.class)) {
+                if (trigger.cell == pos)
+                    return false;
+            }
+        }
+        return super.doPickUp(hero, pos, isAutoLoot);
+    }
 
-		{
-			revivePersists = true;
-		}
+    public static class Trigger extends Buff {
 
-		int cell;
-		int floor;
-		int left;
-		
-		public void set(int cell){
-			floor = Dungeon.depth;
-			this.cell = cell;
-			left = 0;
-		}
-		
-		@Override
-		public boolean act() {
+        {
+            revivePersists = true;
+        }
 
-			if (Dungeon.depth != floor){
-				spend(TICK);
-				return true;
-			}
+        int cell;
+        int floor;
+        int left;
 
-			Noisemaker bomb = null;
-			Heap heap = Dungeon.level.heaps.get(cell);
+        public void set(int cell) {
+            floor = Dungeon.depth;
+            this.cell = cell;
+            left = 0;
+        }
 
-			if (heap != null){
-				for (Item i : heap.items){
-					if (i instanceof Noisemaker){
-						bomb = (Noisemaker) i;
-						break;
-					}
-				}
-			}
+        @Override
+        public boolean act() {
 
-			if (bomb == null) {
-				detach();
+            if (Dungeon.depth != floor) {
+                spend(TICK);
+                return true;
+            }
 
-			} else if (Actor.findChar(cell) != null)  {
+            Noisemaker bomb = null;
+            Heap heap = Dungeon.level.heaps.get(cell);
 
-				heap.items.remove(bomb);
-				if (heap.items.isEmpty()) {
-					heap.destroy();
-				}
+            if (heap != null) {
+                for (Item i : heap.items) {
+                    if (i instanceof Noisemaker) {
+                        bomb = (Noisemaker) i;
+                        break;
+                    }
+                }
+            }
 
-				detach();
-				bomb.explode(cell);
+            if (bomb == null) {
+                detach();
 
-			} else {
-				spend(TICK);
+            } else if (Actor.findChar(cell) != null) {
 
-				left--;
+                heap.items.remove(bomb);
+                if (heap.items.isEmpty()) {
+                    heap.destroy();
+                }
 
-				if (left <= 0){
-					CellEmitter.center( cell ).start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
-					Sample.INSTANCE.play( Assets.Sounds.ALERT );
+                detach();
+                bomb.explode(cell);
 
-					for (Mob mob : Dungeon.level.mobs.toArray( new Mob[0] )) {
-						mob.beckon( cell );
-					}
-					left = 6;
-				}
+            } else {
+                spend(TICK);
 
-			}
+                left--;
 
-			return true;
-		}
+                if (left <= 0) {
+                    CellEmitter.center(cell).start(Speck.factory(Speck.SCREAM), 0.3f, 3);
+                    Sample.INSTANCE.play(Assets.Sounds.ALERT);
 
-		private static final String CELL = "cell";
-		private static final String FLOOR = "floor";
-		private static final String LEFT = "left";
+                    for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
+                        mob.beckon(cell);
+                    }
+                    left = 6;
+                }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(CELL, cell);
-			bundle.put(FLOOR, floor);
-			bundle.put(LEFT, left);
-		}
-		
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			cell = bundle.getInt(CELL);
-			floor = bundle.getInt(FLOOR);
-			left = bundle.getInt(LEFT);
-		}
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients
-		return quantity * (20 + 40);
-	}
+            }
+
+            return true;
+        }
+
+        private static final String CELL = "cell";
+        private static final String FLOOR = "floor";
+        private static final String LEFT = "left";
+
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(CELL, cell);
+            bundle.put(FLOOR, floor);
+            bundle.put(LEFT, left);
+        }
+
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            cell = bundle.getInt(CELL);
+            floor = bundle.getInt(FLOOR);
+            left = bundle.getInt(LEFT);
+        }
+    }
+
+    @Override
+    public int value() {
+        // prices of ingredients
+        return quantity * (20 + 40);
+    }
 }

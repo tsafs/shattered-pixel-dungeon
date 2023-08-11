@@ -61,6 +61,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroAction.PickUp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.Challenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.ElementalStrike;
@@ -864,6 +865,13 @@ public class Hero extends Char {
     }
 
     public void interrupt() {
+        // Still perform auto-looting when interrupted by some other happening
+        // TODO: This might not be the best place to put this piece of logic.
+        // However, this is currently the only way we can make sure that we always
+        // auto-loot.
+        System.out.println("Attempting to auto-loot on interrupt");
+        actPickUp(new PickUp(pos, true));
+
         if (isAlive() && curAction != null &&
                 ((curAction instanceof HeroAction.Move && curAction.dst != pos) ||
                         (curAction instanceof HeroAction.LvlTransition))) {
@@ -893,13 +901,15 @@ public class Hero extends Char {
     }
 
     private boolean actMove(HeroAction.Move action) {
+        // Auto-loot when moving
+        System.out.println("Attempting to auto-loot on actMove");
+        actPickUp(new PickUp(pos, true));
 
         if (getCloser(action.dst)) {
             canSelfTrample = false;
             return true;
-
-            // Hero moves in place if there is grass to trample
         } else if (pos == action.dst && canSelfTrample()) {
+            // Hero moves in place if there is grass to trample
             canSelfTrample = false;
             Dungeon.level.pressCell(pos);
             spendAndNext(1 / speed());
@@ -992,72 +1002,84 @@ public class Hero extends Char {
     // so that the hero spends a turn even if the fail to pick up an item
     public boolean waitOrPickup = false;
 
-    private boolean actPickUp(HeroAction.PickUp action) {
+    /**
+     * Picks up an item from the ground.
+     */
+    public boolean actPickUp(HeroAction.PickUp action) {
+        System.out.println("actPickUp action.dst = " + action.dst + " action.instant = " + action.isAutoLoot);
         int dst = action.dst;
         if (pos == dst) {
-
             Heap heap = Dungeon.level.heaps.get(pos);
             if (heap != null) {
-                Item item = heap.peek();
-                if (item.doPickUp(this)) {
-                    heap.pickUp();
-
-                    if (item instanceof Dewdrop
-                            || item instanceof TimekeepersHourglass.sandBag
-                            || item instanceof DriedRose.Petal
-                            || item instanceof Key
-                            || item instanceof Guidebook) {
-                        // Do Nothing
-                    } else {
-
-                        // TODO make all unique items important? or just POS / SOU?
-                        boolean important = item.unique && item.isIdentified() &&
-                                (item instanceof Scroll || item instanceof Potion);
-                        if (important) {
-                            GLog.p(Messages.capitalize(Messages.get(this, "you_now_have", item.name())));
-                        } else {
-                            GLog.i(Messages.capitalize(Messages.get(this, "you_now_have", item.name())));
+                // We will essentially only run this loop more than one time if
+                // action.isAutoLoot is true and there are multiple items on the heap.
+                // Otherwise we will run it exactly once.
+                do {
+                    Item item = heap.peek();
+                    if (item.doPickUp(this, action.isAutoLoot)) {
+                        if (action.isAutoLoot) {
+                            System.out.println("Successfully auto-looted item " + item.name());
                         }
-                    }
+                        heap.pickUp();
 
-                    curAction = null;
-                } else {
+                        if (item instanceof Dewdrop
+                                || item instanceof TimekeepersHourglass.sandBag
+                                || item instanceof DriedRose.Petal
+                                || item instanceof Key
+                                || item instanceof Guidebook) {
+                            // Do Nothing
+                        } else {
+                            // TODO make all unique items important? or just POS / SOU?
+                            boolean important = item.unique && item.isIdentified() &&
+                                    (item instanceof Scroll || item instanceof Potion);
+                            if (important) {
+                                GLog.p(Messages.capitalize(Messages.get(Hero.class, "you_now_have", item.name())));
+                            } else {
+                                GLog.i(Messages.capitalize(Messages.get(Hero.class, "you_now_have", item.name())));
+                            }
+                        }
 
-                    if (waitOrPickup) {
-                        spendAndNextConstant(TIME_TO_REST);
-                    }
-
-                    // allow the hero to move between levels even if they can't collect the item
-                    if (Dungeon.level.getTransition(pos) != null) {
-                        throwItems();
+                        curAction = null;
                     } else {
-                        heap.sprite.drop();
-                    }
+                        if (waitOrPickup && !action.isAutoLoot) {
+                            spendAndNextConstant(TIME_TO_REST);
+                        } else if (action.isAutoLoot) {
+                            next();
+                        }
 
-                    if (item instanceof Dewdrop
-                            || item instanceof TimekeepersHourglass.sandBag
-                            || item instanceof DriedRose.Petal
-                            || item instanceof Key) {
-                        // Do Nothing
-                    } else {
-                        GLog.newLine();
-                        GLog.n(Messages.capitalize(Messages.get(this, "you_cant_have", item.name())));
-                    }
+                        // allow the hero to move between levels even if they can't collect the item
+                        if (Dungeon.level.getTransition(pos) != null) {
+                            throwItems();
+                        } else {
+                            heap.sprite.drop();
+                        }
 
-                    ready();
-                }
+                        if (item instanceof Dewdrop
+                                || item instanceof TimekeepersHourglass.sandBag
+                                || item instanceof DriedRose.Petal
+                                || item instanceof Key) {
+                            // Do Nothing
+                        } else {
+                            GLog.newLine();
+                            GLog.n(Messages.capitalize(Messages.get(this, "you_cant_have", item.name())));
+                        }
+
+                        if (!action.isAutoLoot)
+                            ready();
+                    }
+                } while (action.isAutoLoot && !heap.isEmpty());
             } else {
-                ready();
+                if (!action.isAutoLoot)
+                    ready();
             }
 
             return false;
 
         } else if (getCloser(dst)) {
-
             return true;
-
         } else {
-            ready();
+            if (!action.isAutoLoot)
+                ready();
             return false;
         }
     }
@@ -1713,11 +1735,9 @@ public class Hero extends Char {
 
             curAction = new HeroAction.Mine(cell);
 
-        } else if (heap != null
-                // moving to an item doesn't auto-pickup when enemies are near...
-                && (visibleEnemies.size() == 0 || cell == pos ||
-                // ...but only for standard heaps. Chests and similar open as normal.
-                        (heap.type != Type.HEAP && heap.type != Type.FOR_SALE))) {
+        } else if (heap != null && (cell == pos || (heap.type != Type.HEAP && heap.type != Type.FOR_SALE))) {
+            // Moving to an item doesn't auto-pickup for standard heaps and for-sale heaps.
+            // Chests and similar open as normal.
 
             switch (heap.type) {
                 case HEAP:
