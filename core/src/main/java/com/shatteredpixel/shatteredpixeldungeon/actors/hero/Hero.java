@@ -992,14 +992,20 @@ public class Hero extends Char {
     // so that the hero spends a turn even if the fail to pick up an item
     public boolean waitOrPickup = false;
 
-    private boolean actPickUp(HeroAction.PickUp action) {
+    /**
+     * Picks up an item from the ground.
+     */
+    public boolean actPickUp(HeroAction.PickUp action) {
+        System.out.println("actPickUp action.dst = " + action.dst + " action.instant = " + action.isAutoLoot);
         int dst = action.dst;
         if (pos == dst) {
-
             Heap heap = Dungeon.level.heaps.get(pos);
             if (heap != null) {
                 Item item = heap.peek();
-                if (item.doPickUp(this)) {
+                if (item.doPickUp(this, action.isAutoLoot)) {
+                    if (action.isAutoLoot) {
+                        System.out.println("Successfully auto-looted item " + item.name());
+                    }
                     heap.pickUp();
 
                     if (item instanceof Dewdrop
@@ -1009,22 +1015,23 @@ public class Hero extends Char {
                             || item instanceof Guidebook) {
                         // Do Nothing
                     } else {
-
                         // TODO make all unique items important? or just POS / SOU?
                         boolean important = item.unique && item.isIdentified() &&
                                 (item instanceof Scroll || item instanceof Potion);
                         if (important) {
-                            GLog.p(Messages.capitalize(Messages.get(this, "you_now_have", item.name())));
+                            GLog.p(Messages.capitalize(Messages.get(Hero.class, "you_now_have", item.name())));
                         } else {
-                            GLog.i(Messages.capitalize(Messages.get(this, "you_now_have", item.name())));
+                            GLog.i(Messages.capitalize(Messages.get(Hero.class, "you_now_have", item.name())));
                         }
                     }
 
                     curAction = null;
                 } else {
 
-                    if (waitOrPickup) {
+                    if (waitOrPickup && !action.isAutoLoot) {
                         spendAndNextConstant(TIME_TO_REST);
+                    } else if (action.isAutoLoot) {
+                        next();
                     }
 
                     // allow the hero to move between levels even if they can't collect the item
@@ -1044,20 +1051,21 @@ public class Hero extends Char {
                         GLog.n(Messages.capitalize(Messages.get(this, "you_cant_have", item.name())));
                     }
 
-                    ready();
+                    if (!action.isAutoLoot)
+                        ready();
                 }
             } else {
-                ready();
+                if (!action.isAutoLoot)
+                    ready();
             }
 
             return false;
 
         } else if (getCloser(dst)) {
-
             return true;
-
         } else {
-            ready();
+            if (!action.isAutoLoot)
+                ready();
             return false;
         }
     }
@@ -1713,11 +1721,9 @@ public class Hero extends Char {
 
             curAction = new HeroAction.Mine(cell);
 
-        } else if (heap != null
-                // moving to an item doesn't auto-pickup when enemies are near...
-                && (visibleEnemies.size() == 0 || cell == pos ||
-                // ...but only for standard heaps. Chests and similar open as normal.
-                        (heap.type != Type.HEAP && heap.type != Type.FOR_SALE))) {
+        } else if (heap != null && (cell == pos || (heap.type != Type.HEAP && heap.type != Type.FOR_SALE))) {
+            // Moving to an item doesn't auto-pickup for standard heaps and for-sale heaps.
+            // Chests and similar open as normal.
 
             switch (heap.type) {
                 case HEAP:
