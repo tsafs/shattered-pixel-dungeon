@@ -114,7 +114,7 @@ public class Item implements Bundlable {
     }
 
     public boolean doPickUp(Hero hero) {
-        return doPickUp(hero, hero.pos);
+        return doPickUp(hero, hero.pos, false);
     }
 
     public boolean doPickUp(Hero hero, boolean isAutoLoot) {
@@ -125,6 +125,8 @@ public class Item implements Bundlable {
         return doPickUp(hero, hero.pos, false);
     }
 
+    // You have to overwrite this one in all kinds of subclasses for implementing
+    // auto-looting
     public boolean doPickUp(Hero hero, int pos, boolean isAutoLoot) {
         if (collect(hero.belongings.backpack)) {
             GameScene.pickUp(this, pos);
