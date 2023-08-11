@@ -5,12 +5,12 @@ This is a fork and contributions are welcome :) I'd like to add quality of life 
 ## Modifications in this fork
 
 - Adds a new game mode `Softcore`. This is the new default. The softcore game mode allows to restart at the last save point upon death. `Ankh` can still be found and used, but has no effect in this game mode.
+- Implements auto-loot that triggers when walking over items that lie on the floor. This includes items that were just dropped on the hero's position, if certain conditions apply.
 
 ### TODO
 
 - Redo translations. After a quick check in the German translations, some of them seem off. Perhaps context based translations with the aid of LLMs can do a better job.
 - Refine controller support. I'd like to auto target enemies and switch between them more easily.
-- Autolooting. Currently, loot is sometimes not automatically picked up. For example, this happens when a dewdrop drops upon walking on a grass field and also when the hero walks too fast.
 - Remove ranking for softcore mode
 
 ## Original README
